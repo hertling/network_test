@@ -29,6 +29,7 @@ puts "Missing required -r HOST argument. See --help" unless options[:host]
 options[:interval]=15 unless options[:interval]
 options[:duration]=2 unless options[:duration]
 options[:packets]=1000 unless options[:packets]
+options[:file]="earth_test_file.png"
 
 puts "Settings:"
 puts options.to_yaml
@@ -80,6 +81,43 @@ def send_packets(options)
   puts "    sent #{options[:packets]} packets in #{(elapsed_time*1000).round(2)} ms"
 end
 
+#        open tcp socket
+#        Send "THROUGHPUT 5*1024*1024"
+#        start_send_time
+#        send 5 MB
+#        end_send_time
+#        start_receive_time
+#        receive 5 MB
+#        end_receive_time
+#        result = up speed in mbps, down speed in mbps
+#        close tcp socket
+
+# send "THROUGHPUT TEST"
+# note start time
+# send file
+#
+SIZE = 1024 * 1024 * 5
+
+def throughput_test(s, file, host)
+  s.puts "Start throughput test"
+  sleep 1
+  bytes_written=0
+  # Use a maximum 5 mb file
+
+  TCPSocket.open(host, 6364) do |socket|
+    File.open(file, 'rb') do |file|
+      while chunk = file.read(SIZE)
+        bytes_written+=chunk.size
+        socket.write(chunk)
+      end
+    end
+  end
+  elapsed_time = s.gets.to_f
+  mb=bytes_written/(1024.0*1024.0)
+  puts "#{elapsed_time} seconds to send #{bytes_written} bytes. #{(mb/elapsed_time).round(3)} mbps"
+
+end
+
 def packet_drop_test(options, s)
   puts "  Starting packet test with #{options[:packets]} packets"
   s.puts "PACKETDROP"
@@ -117,17 +155,9 @@ def run_suite(options, run_number)
   puts "  Latency test result (worst of 3): #{test_run[:latency].round(3)} ms"
 
 
-# m5. throughput test
-#        open tcp socket
-#        Send "THROUGHPUT 5*1024*1024"
-#        start_send_time
-#        send 5 MB
-#        end_send_time
-#        start_receive_time
-#        receive 5 MB
-#        end_receive_time
-#        result = up speed in mbps, down speed in mbps
-#        close tcp socket
+  # m5. throughput test
+  test_run[:throughput] = throughput_test(s, options[:file], options[:host])
+
 
   test_run[:up_success_ratio], test_run[:down_success_ratio] = packet_drop_test(options, s)
   puts "  Packet Drop Test (ratio of 1000 packets transmitted):"
@@ -136,14 +166,14 @@ def run_suite(options, run_number)
 
 
 
-# m7. log data
-#        if logfile doesn't exist, create it and header
-#        write remote name, time, latency, throughput, packet drop
-#        close log file
+  # m7. log data
+  #        if logfile doesn't exist, create it and header
+  #        write remote name, time, latency, throughput, packet drop
+  #        close log file
 
-# m8. sleep until next interval
-#        interval start time + interval time = next run time
-#        if next_interval after end_time, clean up.
+  # m8. sleep until next interval
+  #        interval start time + interval time = next run time
+  #        if next_interval after end_time, clean up.
 
   s.puts "FINISHED"
   s.close             # close socket when done

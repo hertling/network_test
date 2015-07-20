@@ -10,7 +10,7 @@ require 'socket'
 #      get remote address
 options = {}
 OptionParser.new do |opts|
-  opts.banner = "Usage: slave.rb [options]"
+  opts.banner = "Usage: server.rb [options]"
 
   opts.on('-n NAME', '--name NAME', 'Name of endpoint, e.g. "Portland"') { |v| options[:local_name] = v }
 
@@ -55,6 +55,8 @@ end
 #   read line
 server = TCPServer.new 6363
 
+SIZE = 1024 * 1024 * 5
+
 loop do
   client = server.accept    # Wait for a client to connect
   puts "Client connected at #{Time.now}"
@@ -80,6 +82,20 @@ loop do
       when 'FINISHED'
         test_run=:finished
         client.close
+
+      when 'Start throughput test'
+        throughput_server = TCPServer.new 6364
+        throughput_client = throughput_server.accept
+
+        bytes_received=0
+        start_time = Time.now
+        while chunk = throughput_client.read(SIZE)
+          bytes_received+=chunk.size
+        end
+        throughput_client.close
+
+        elapsed_time = Time.now - start_time
+        client.puts elapsed_time
 
       when 'EXIT'
         exit
