@@ -143,8 +143,8 @@ def run_suite(options, run_number)
 
   # m1.5. get remote name
   s.puts 'NAME'
-  remote_name = s.gets
-  puts "  #{options[:local_name]} --> #{remote_name}"
+  test_run[:remote_name] = s.gets
+  puts "  #{options[:local_name]} --> #{test_run[:remote_name]=}"
 
 
   # m2. execute needed tests
