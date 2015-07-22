@@ -75,7 +75,7 @@ loop do
       when 'PING'
         client.puts 'ACK'
 
-      when 'PACKETDROP'
+      when 'PACKETDROPUP'
         target_packets = client.gets.strip.to_i
         num_received = receive_packets(target_packets)
         client.puts "#{num_received}:#{target_packets}"
@@ -86,7 +86,7 @@ loop do
         puts "test run finished.\ncurrent memory usage: #{`ps -o rss -p #{$$}`.strip.split.last.to_i} KB\n"
         client.close
 
-      when 'THROUGHPUT'
+      when 'THROUGHPUTUP'
         throughput_socket = throughput_server.accept
         bytes_received=0
         start_time = Time.now

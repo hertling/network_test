@@ -75,7 +75,7 @@ end
 SIZE = 1024 * 1024 * 5
 
 def throughput_test(s, filename, host)
-  s.puts "THROUGHPUT"
+  s.puts "THROUGHPUTUP"
   sleep 3
   bytes_written=0
   # Use a maximum 5 mb file
@@ -96,7 +96,7 @@ end
 
 def packet_drop_test(options, s)
   puts "  Starting packet test with #{options[:packets]} packets"
-  s.puts "PACKETDROP"
+  s.puts "PACKETDROPUP"
   s.puts options[:packets]
   sleep 1
   send_packets(options)
