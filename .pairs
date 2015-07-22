@@ -1,0 +1,27 @@
+# .pairs - configuration for 'git pair'
+# place in project or home directory
+pairs:
+  am: Aditi Mehta
+  as: Andy Seitz
+  jt: James Trask; trask
+  pd: Peter Dirickson
+  ap: Arjun Patel; arjunpatel
+  mr: Melanie Robertson
+  mw: Mike Whitmarsh
+  wh: Will Hertling
+  jl: Jen Liu
+  sk: Sabrina Kwan
+  kd: Kelley Davis
+  rs: Ray Sensenbach
+  ml: Marlon Lopes
+  lm: Leandro Manica; leandromanica
+  cm: Cassiano Menezes; cassiano.menezes
+  tc: Tales Chaves
+  gs: Glenn Sisson
+  cf: Cantidio Fontes; cfontes
+  ds: Dalmir Silva; dalmirsilva
+  bjw: Ben White; benjiman
+email:
+  prefix: pair
+  domain: hp.com
+  no_solo_prefix: true
