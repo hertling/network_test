@@ -1,6 +1,7 @@
 require 'optparse'
 require 'yaml'
 require 'socket'
+require_relative 'result_recorder'
 
 # 1. get parameters
 #     set endpoint name (e.g. "Portland" or "SanDiego")
@@ -103,17 +104,16 @@ def packet_drop_test(options, s)
   reply = s.gets
   puts "    reply: #{reply}"
   puts "    finished packet drop test"
-  received, expected = reply.split(':')
-  up_success_ratio = received.to_i / expected.to_i
-  [up_success_ratio, 0.0]
+  received = reply.split(':')[0].to_i
+  [options[:packets]-received, options[:packets]]
 end
 
 
 def run_suite(options, run_number)
-# start run
+  test_run={time: Time.now}
+
   puts "\n\nStarting run #{run_number}!"
   s = TCPSocket.new options[:host], 6363
-  test_run={}
 
 
   # m1.5. get remote name
@@ -121,9 +121,6 @@ def run_suite(options, run_number)
   test_run[:remote_name] = s.gets
   puts "  #{options[:local_name]} --> #{test_run[:remote_name]}"
 
-
-  # m2. execute needed tests
-  $interval_start_time = Time.now
 
   # m3. latency test: do ping test 3 times, take slowest score.
   test_run[:latency] = latency(s)
@@ -136,12 +133,13 @@ def run_suite(options, run_number)
   puts "    Down datarate: #{test_run[:throughput_down].round(3)} MBytes/Sec"
 
 
-  test_run[:up_success_ratio], test_run[:down_success_ratio] = packet_drop_test(options, s)
+  test_run[:transmitted_dropped], test_run[:received_dropped] = packet_drop_test(options, s)
   puts "  Packet Drop Test (ratio of 1000 packets transmitted):"
-  puts "    Up   ratio: #{test_run[:up_success_ratio].round(4)}"
-  puts "    Down ratio: #{test_run[:down_success_ratio].round(4)}"
+  puts "    Up   dropped: #{test_run[:transmitted_dropped]}"
+  puts "    Down dropped: #{test_run[:received_dropped]}"
 
 
+  ResultRecorder.record(options, test_run)
 
   # m7. log data
   #        if logfile doesn't exist, create it and header
@@ -154,15 +152,17 @@ def run_suite(options, run_number)
 
   s.puts "FINISHED"
   s.close             # close socket when done
+
+  test_run
 end
 
 
 run_number=0
 
 until Time.now > keep_running_until
-  run_suite(options, run_number+=1)
+  results = run_suite(options, run_number+=1)
 
-  time_until_next_run = ($interval_start_time + (options[:interval]*60)) - Time.now
+  time_until_next_run = (results[:time] + (options[:interval]*60)) - Time.now
   puts "\nNext run is in #{time_until_next_run.round(2)} seconds, or #{(time_until_next_run/60.0).round(2)} minutes"
 
   test_time_left = keep_running_until - Time.now

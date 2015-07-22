@@ -1,7 +1,7 @@
 require 'csv'
 
 class ResultRecorder
-  def sanitize_filename(filename)
+  def self.sanitize_filename(filename)
     # source: http://stackoverflow.com/a/10823131/3961937
 
     fn = filename.split /(?<=.)\.(?=[^.])(?!.*\.[^.])/m
@@ -11,27 +11,27 @@ class ResultRecorder
     return fn.join '.'
   end
 
-  def initialize(options)
-    @options=options
+  def self.filename(options, r)
+    sanitize_filename "#{options[:local_name]}-to-#{r[:remote_name]}.csv"
   end
 
-  def filename(r)
-    sanitize_filename "#{@options[:local_name]}-to-#{r[:remote_name]}.csv"
-  end
+  def self.record (options, result)
+    column_header = ["time", "latency", "throughput up", "throughput down", "transmitted_dropped", "received_dropped"]
+    write_headers=true
 
-  def add_row(result)
-    column_header = ["time", "ping", "throughput up", "throughput down", "packetdrop up", "packetdrop down"]
+    fname=filename(options, result)
+    write_headers=false if File.exists?(fname)
 
-    CSV.open(filename(result), "a+",
-               :write_headers => true,
+    CSV.open(fname, "a+",
+               :write_headers => write_headers,
                :headers => column_header) do |hdr|
       column_header=nil #No header after first insertion
       data_out = [result[:time],
-                  result[:ping],
-                  result[:throughput_up],
-                  result[:throughput_down],
-                  result[:packetdrop_up],
-                  result[:packetdrop_down]]
+                  result[:latency].round(4),
+                  result[:throughput_up].round(4),
+                  result[:throughput_down].round(4),
+                  result[:transmitted_dropped],
+                  result[:received_dropped]]
       hdr << data_out
     end
 
