@@ -81,6 +81,7 @@ loop do
 
       when 'FINISHED'
         test_run=:finished
+        puts "test run finished.\ncurrent memory usage: #{`ps -o rss -p #{$$}`.strip.split.last.to_i} KB\n"
         client.close
 
       when 'Start throughput test'

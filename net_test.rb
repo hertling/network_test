@@ -81,26 +81,11 @@ def send_packets(options)
   puts "    sent #{options[:packets]} packets in #{(elapsed_time*1000).round(2)} ms"
 end
 
-#        open tcp socket
-#        Send "THROUGHPUT 5*1024*1024"
-#        start_send_time
-#        send 5 MB
-#        end_send_time
-#        start_receive_time
-#        receive 5 MB
-#        end_receive_time
-#        result = up speed in mbps, down speed in mbps
-#        close tcp socket
-
-# send "THROUGHPUT TEST"
-# note start time
-# send file
-#
 SIZE = 1024 * 1024 * 5
 
 def throughput_test(s, file, host)
   s.puts "Start throughput test"
-  sleep 1
+  sleep 2
   bytes_written=0
   # Use a maximum 5 mb file
 
@@ -114,8 +99,7 @@ def throughput_test(s, file, host)
   end
   elapsed_time = s.gets.to_f
   mb=bytes_written/(1024.0*1024.0)
-  puts "#{elapsed_time} seconds to send #{bytes_written} bytes. #{(mb/elapsed_time).round(3)} mbps"
-
+  [mb/elapsed_time, 0.0]
 end
 
 def packet_drop_test(options, s)
@@ -144,7 +128,7 @@ def run_suite(options, run_number)
   # m1.5. get remote name
   s.puts 'NAME'
   test_run[:remote_name] = s.gets
-  puts "  #{options[:local_name]} --> #{test_run[:remote_name]=}"
+  puts "  #{options[:local_name]} --> #{test_run[:remote_name]}"
 
 
   # m2. execute needed tests
@@ -155,8 +139,10 @@ def run_suite(options, run_number)
   puts "  Latency test result (worst of 3): #{test_run[:latency].round(3)} ms"
 
 
-  # m5. throughput test
-  test_run[:throughput] = throughput_test(s, options[:file], options[:host])
+  test_run[:throughput_up], test_run[:throughput_down] = throughput_test(s, options[:file], options[:host])
+  puts "  Throughput test (sending of 3.2mb file):"
+  puts "    Up   datarate: #{test_run[:throughput_up].round(3)} MBytes/Sec (#{(test_run[:throughput_up]*8).round(3)} mbps)"
+  puts "    Down datarate: #{test_run[:throughput_down].round(3)} MBytes/Sec"
 
 
   test_run[:up_success_ratio], test_run[:down_success_ratio] = packet_drop_test(options, s)
@@ -190,7 +176,8 @@ until Time.now > keep_running_until
 
   test_time_left = keep_running_until - Time.now
   puts "Test will keep running for #{(test_time_left/60.0).round(2)} minutes, or #{(test_time_left/3600.0).round(2)} hours"
-  puts "NETWORK TESTING IN PROGRESS. DO NOT KILL OR TURN OFF MACHINE.\nSleeping..."
+  puts "current memory usage: #{`ps -o rss -p #{$$}`.strip.split.last.to_i} KB"
+  puts "NETWORK TESTING IN PROGRESS. DO NOT STOP.\nSleeping..."
 
   sleep time_until_next_run
 end
