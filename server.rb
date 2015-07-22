@@ -54,6 +54,7 @@ end
 # Loop forever
 #   read line
 server = TCPServer.new 6363
+throughput_server = TCPServer.new 6364
 
 SIZE = 1024 * 1024 * 5
 
@@ -81,19 +82,18 @@ loop do
 
       when 'FINISHED'
         test_run=:finished
+        GC.start
         puts "test run finished.\ncurrent memory usage: #{`ps -o rss -p #{$$}`.strip.split.last.to_i} KB\n"
         client.close
 
-      when 'Start throughput test'
-        throughput_server = TCPServer.new 6364
-        throughput_client = throughput_server.accept
-
+      when 'THROUGHPUT'
+        throughput_socket = throughput_server.accept
         bytes_received=0
         start_time = Time.now
-        while chunk = throughput_client.read(SIZE)
+        while chunk = throughput_socket.read(SIZE)
           bytes_received+=chunk.size
         end
-        throughput_client.close
+        throughput_socket.close
 
         elapsed_time = Time.now - start_time
         client.puts elapsed_time

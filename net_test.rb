@@ -45,8 +45,7 @@ def ping(s)
   start_time = Time.now
   s.puts 'PING'
   s.gets
-  elapsed = (Time.now - start_time) * 1000
-  elapsed
+  (Time.now - start_time) * 1000
 end
 
 
@@ -58,15 +57,6 @@ def latency(s)
   results.max
 end
 
-
-# m6. packet drop test part 2
-
-#        open udp socket
-#        listen for packets and count them for at most one minute
-#        close udp socket
-#        send "PACKETDROP DONE"
-#        close tcp socket
-#        result = percent of up packets dropped, percent down packets dropped
 
 def send_packets(options)
   u = UDPSocket.new
@@ -83,20 +73,21 @@ end
 
 SIZE = 1024 * 1024 * 5
 
-def throughput_test(s, file, host)
-  s.puts "Start throughput test"
-  sleep 2
+def throughput_test(s, filename, host)
+  s.puts "THROUGHPUT"
+  sleep 3
   bytes_written=0
   # Use a maximum 5 mb file
 
   TCPSocket.open(host, 6364) do |socket|
-    File.open(file, 'rb') do |file|
+    File.open(filename, 'rb') do |file|
       while chunk = file.read(SIZE)
         bytes_written+=chunk.size
         socket.write(chunk)
       end
     end
   end
+
   elapsed_time = s.gets.to_f
   mb=bytes_written/(1024.0*1024.0)
   [mb/elapsed_time, 0.0]
@@ -176,6 +167,8 @@ until Time.now > keep_running_until
 
   test_time_left = keep_running_until - Time.now
   puts "Test will keep running for #{(test_time_left/60.0).round(2)} minutes, or #{(test_time_left/3600.0).round(2)} hours"
+
+  GC.start
   puts "current memory usage: #{`ps -o rss -p #{$$}`.strip.split.last.to_i} KB"
   puts "NETWORK TESTING IN PROGRESS. DO NOT STOP.\nSleeping..."
 
